@@ -9,7 +9,7 @@ VERSION=$(grep '^SHOPIFY_API_VERSION=' .env | cut -d= -f2)
 COLLECTION=$(grep '^SHOPIFY_COLLECTION_ID=' .env | cut -d= -f2)
 
 QUERY=$(cat <<EOF
-{ products(first: 15, query: "handle:modern-desk-lamp OR handle:ergonomic-office-chair OR handle:wireless-bluetooth-speaker OR handle:premium-yoga-mat OR handle:stainless-steel-water-bottle OR handle:handcrafted-ceramic-mug OR handle:organic-cotton-t-shirt OR handle:smart-fitness-tracker OR handle:premium-coffee-beans OR handle:minimalist-wall-clock") { nodes { title handle inCollection(id: "gid://shopify/Collection/${COLLECTION}") variants(first: 1) { nodes { sku price inventoryQuantity } } } } }
+{ shop { name } productsCount { count } collection(id: "gid://shopify/Collection/${COLLECTION}") { title } products(first: 15, query: "handle:modern-desk-lamp OR handle:ergonomic-office-chair OR handle:wireless-bluetooth-speaker OR handle:premium-yoga-mat OR handle:stainless-steel-water-bottle OR handle:handcrafted-ceramic-mug OR handle:organic-cotton-t-shirt OR handle:smart-fitness-tracker OR handle:premium-coffee-beans OR handle:minimalist-wall-clock") { nodes { title handle inCollection(id: "gid://shopify/Collection/${COLLECTION}") variants(first: 1) { nodes { sku price inventoryQuantity } } } } }
 EOF
 )
 
@@ -20,7 +20,10 @@ curl -s -X POST "https://${STORE}/admin/api/${VERSION}/graphql.json" \
 python3 -c '
 import json, sys
 
-nodes = json.load(sys.stdin)["data"]["products"]["nodes"]
+data = json.load(sys.stdin)["data"]
+nodes = data["products"]["nodes"]
+print(f"\nStore: {data['"'"'shop'"'"']['"'"'name'"'"']} — {data['"'"'productsCount'"'"']['"'"'count'"'"']} products total")
+print(f"Target collection: \"{data['"'"'collection'"'"']['"'"'title'"'"']}\"")
 print(f"\n{'"'"'Product'"'"':32} {'"'"'SKU'"'"':10} {'"'"'Price'"'"':>8} {'"'"'Qty'"'"':>4}  In Collection?")
 print("-" * 75)
 for n in nodes:
