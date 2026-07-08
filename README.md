@@ -80,6 +80,27 @@ Variant Inventory Policy, Variant Fulfillment Service, Variant Weight,
 Variant Weight Unit, Image Src, Image Position, Image Alt Text
 ```
 
+## Verifying the import
+
+Two ways to confirm the products really landed on Shopify and were added to the collection:
+
+**1. Bundled verification script** — prints every imported product with its SKU, price, inventory, and collection membership:
+
+```bash
+./verify-import.sh
+```
+
+**2. Raw GraphQL check** — a minimal query against Shopify's GraphQL Admin API (the same endpoint the app uses):
+
+```bash
+TOKEN=$(grep '^SHOPIFY_ACCESS_TOKEN=' .env | cut -d= -f2)
+curl -s -X POST "https://$(grep '^SHOPIFY_STORE_URL=' .env | cut -d= -f2)/admin/api/2025-07/graphql.json" \
+  -H "X-Shopify-Access-Token: $TOKEN" -H "Content-Type: application/json" \
+  -d '{"query":"{ shop { name } productsCount { count } }"}' | python3 -m json.tool
+```
+
+The `extensions.cost` block in the response shows Shopify's GraphQL rate limiting (a 2,000-point bucket refilling at 100 points/s) — `ShopifyService` automatically retries with exponential backoff when the bucket is exhausted.
+
 ## Testing
 
 Tests run against a dedicated MySQL database — create it once, then run the suite:
